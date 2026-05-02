@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.uid == userId
+            && (data.email == null || (data.email is string && data.email.size() <= 200))
+            && (data.youtubeConnected == null || data.youtubeConnected is bool)
+            && (data.displayName == null || (data.displayName is string && data.displayName.size() <= 100))
+            && (data.niche == null || (data.niche is string && data.niche.size() <= 100));
+      }
+
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) 
+                     && incoming().keys().hasAll(['uid', 'email'])
+                     && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && isValidUser(incoming()) 
+                     && incoming().createdAt == existing().createdAt
+                     && incoming().diff(existing()).affectedKeys().hasOnly([
+                        'uid', 'email', 'youtubeConnected', 'youtubeChannelId', 
+                        'youtubeRefreshToken', 'niche', 'displayName', 'updatedAt'
+                     ]);
+    }
+
+    // Projects collection
+    match /projects/{projectId} {
+      function isValidProject(data) {
+        return data.userId == request.auth.uid
+            && data.title is string && data.title.size() <= 200
+            && data.status in ['draft', 'generating', 'ready', 'scheduled', 'posted', 'error']
+            && (data.aspectRatio == null || data.aspectRatio in ['16:9', '9:16']);
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() && isValidProject(incoming()) 
+                     && incoming().createdAt == request.time
+                     && incoming().updatedAt == request.time;
+                     
+      allow update: if isSignedIn() && existing().userId == request.auth.uid 
+                     && isValidProject(incoming())
+                     && incoming().createdAt == existing().createdAt
+                     && incoming().updatedAt == request.time;
+                     
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+
+      // Sub-analytics
+      match /analytics/current {
+        allow read: if isSignedIn() && get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid;
+      }
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and YouTube connection data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "youtubeConnected": { "type": "boolean" },
+        "youtubeChannelId": { "type": "string" },
+        "youtubeRefreshToken": { "type": "string" },
+        "niche": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "A video generation project",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "prompt": { "type": "string" },
+        "script": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "generating", "ready", "scheduled", "posted", "error"] },
+        "aspectRatio": { "type": "string", "enum": ["16:9", "9:16"] },
+        "videoUrl": { "type": "string" },
+        "thumbnailUrl": { "type": "string" },
+        "scheduledAt": { "type": "string", "format": "date-time" },
+        "postedAt": { "type": "string", "format": "date-time" },
+        "youtubeVideoId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "status"]
+    },
+    "Analytics": {
+      "title": "Analytics",
+      "description": "Performance metrics for a posted video",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "views": { "type": "integer" },
+        "likes": { "type": "integer" },
+        "comments": { "type": "integer" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User accounts"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Video projects"
+    },
+    "/projects/{projectId}/analytics/current": {
+      "schema": "Analytics",
+      "description": "Tracking metrics for individual videos"
+    }
+  }
+}

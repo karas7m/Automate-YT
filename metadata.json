@@ -1,0 +1,14 @@
+{
+  "name": "AutoChannel AI",
+  "description": "An autonomous AI-powered faceless video generation and YouTube channel management platform. Features include AI scriptwriting, stock footage orchestration, voiceover generation, automated scheduling, and performance analytics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "AI Video Generation",
+    "YouTube Automation",
+    "Social Media Scheduling",
+    "Analytics Dashboard"
+  ]
+}
